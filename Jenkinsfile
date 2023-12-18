@@ -20,45 +20,46 @@ pipeline {
             when {
                 not {
                     anyOf {
-                        branch 'master';
-                        branch 'develop'
+                        expression { branch 'master' }
+                        expression { branch 'develop' }
                     }
                 }
-           }
-           steps {
-               sh "mvn clean compile"
+            }
+            steps {
+                sh "mvn clean compile"
             }
         }
         stage("Run Test cases") {
             when {
-                branch 'develop';
+                expression { branch 'develop' }
             }
-           steps {
-               sh "mvn clean test"
+            steps {
+                sh "mvn clean test"
             }
         }
         stage("Check Code coverage") {
             when {
-                branch 'develop'
+                expression { branch 'develop' }
             }
             steps {
-               jacoco(
+                jacoco(
                     execPattern: '**/target/**.exec',
                     classPattern: '**/target/classes',
                     sourcePattern: '**/src',
                     inclusionPattern: 'com/iamvickyav/**',
                     changeBuildStatus: true,
                     minimumInstructionCoverage: '30',
-                    maximumInstructionCoverage: '80')
-           }
+                    maximumInstructionCoverage: '80'
+                )
+            }
         }
         stage("Build & Deploy Code") {
             when {
-                branch 'master'
+                expression { branch 'master' }
             }
             steps {
                 sh "mvn tomcat7:deploy"
             }
         }
     }
- }
+}
