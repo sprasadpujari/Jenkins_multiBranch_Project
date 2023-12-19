@@ -20,8 +20,8 @@ pipeline {
             when {
                 not {
                     anyOf {
-                        expression { branch 'master' }
-                        expression { branch 'develop' }
+                        expression { branch 'main' }
+                        expression { branch 'dev' }
                     }
                 }
             }
@@ -31,7 +31,7 @@ pipeline {
         }
         stage("Run Test cases") {
             when {
-                expression { branch 'develop' }
+                expression { branch 'dev' }
             }
             steps {
                 sh "mvn clean test"
@@ -39,7 +39,7 @@ pipeline {
         }
         stage("Check Code coverage") {
             when {
-                expression { branch 'develop' }
+                expression { branch 'dev' }
             }
             steps {
                 jacoco(
@@ -55,7 +55,7 @@ pipeline {
         }
         stage("Build & Deploy Code") {
             when {
-                expression { branch 'master' }
+                expression { branch 'main' }
             }
             steps {
                 sh "mvn tomcat7:deploy"
