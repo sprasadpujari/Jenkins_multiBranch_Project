@@ -1,56 +1,64 @@
+
 pipeline {
     agent any
     tools {
-        maven 'maven'
-        dockerTool 'docker'
+        maven '3.9.6'
+        jdk 'java8'
     }
-    stages{
-       
-        stage('BUILD'){
-            when {
-                branch 'dev'
-            }
-            steps{
-                echo "BUILDING THE IMAGE... "
-                
-                sh "mvn clean package"
-                sh "docker build -t intern/springapp:build-${BUILD_ID} ."
-                
+    stages {
+        stage("Checkout Code") {
+            steps {
+                checkout scm
             }
         }
-        stage('TAG'){
+        stage("Check Code Health") {
             when {
-                branch 'dev'
-            }
-            steps{
-                echo "TAGGING GIT REPO..."
-                
-                sh """
-                git tag build-${BUILD_ID}
-                git push origin --tags
-                """
-
-            }
-        }
-        stage('PUSH'){
-            when {
-                branch 'dev'
-            }
-            steps{
-                echo "PUSHING THE IMAGE TO REPO ..."
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
-                    sh """
-                    echo ${PASSWORD} | docker login --username ${USERNAME} --password-stdin 
-                    docker tag intern/springapp:build-${BUILD_ID} ${USERNAME}/jenkins-maven:build-${BUILD_ID}
-                    docker push ${USERNAME}/jenkins-maven:build-${BUILD_ID}
-                    """
+                not {
+                    anyOf {
+                        branch 'main'
+                        branch 'dev'
+                    }
                 }
             }
+            steps {
+                sh "mvn clean compile"
+            }
         }
-    }
-    post {
-        success {
-           build job: 'Maven deploy', parameters: [string(name: 'BUILD', value: "$BUILD_ID")]
+        stage("Run Test cases") {
+            when {
+                branch 'dev'
+            }
+            steps {
+                sh "mvn clean test"
+            }
+        }
+        stage("Check Code coverage") {
+            when {
+                branch 'dev'
+            }
+            steps {
+                jacoco(
+                    execPattern: '**/target/**.exec',
+                    classPattern: '**/target/classes',
+                    sourcePattern: '**/src',
+                    inclusionPattern: 'com/iamvickyav/**',
+                    changeBuildStatus: true,
+                    minimumInstructionCoverage: '30',
+                    maximumInstructionCoverage: '80'
+                )
+            }
+        }
+        stage("Build & Deploy Code") {
+            when {
+                branch 'main'
+            }
+            steps {
+                script{
+                    def javaHome = tool 'java8'
+                    env.JAVA_HOME = "${javaHome}/bin/java"
+                    
+                }
+            }
         }
     }
 }
