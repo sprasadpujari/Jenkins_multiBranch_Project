@@ -4,8 +4,8 @@ pipelines:
     group: defaultGroup
     materials:
       backend:
-        git: https://github.com/iamvickyav/spring-boot-h2-war-tomcat.git
-        branch: master
+        git: https://github.com/sprasadpujari/Jenkins_multiBranch_Project
+        branch: main
       stages:
         - Build_Demo_Project_Stage:
             clean_workspace: true
