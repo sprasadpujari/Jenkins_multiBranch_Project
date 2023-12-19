@@ -1,9 +1,11 @@
-pipeline {
+   pipeline {
     agent any
+
     tools {
         maven '3.9.6'
         jdk 'java8'
     }
+
     stages {
         stage('Checkout') {
             steps {
