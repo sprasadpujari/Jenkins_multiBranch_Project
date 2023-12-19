@@ -1,63 +1,56 @@
 pipeline {
     agent any
     tools {
-        maven '3.9.6'
-        jdk 'java8'
+        maven 'maven'
+        dockerTool 'docker'
     }
-    stages {
-        stage("Checkout Code") {
-            steps {
-                checkout scm
-            }
-        }
-        stage("Check Code Health") {
-            when {
-                not {
-                    anyOf {
-                        branch 'main'
-                        branch 'dev'
-                    }
-                }
-            }
-            steps {
-                sh "mvn clean compile"
-            }
-        }
-        stage("Run Test cases") {
+    stages{
+       
+        stage('BUILD'){
             when {
                 branch 'dev'
             }
-            steps {
-                sh "mvn clean test"
+            steps{
+                echo "BUILDING THE IMAGE... "
+                
+                sh "mvn clean package"
+                sh "docker build -t intern/springapp:build-${BUILD_ID} ."
+                
             }
         }
-        stage("Check Code coverage") {
+        stage('TAG'){
             when {
                 branch 'dev'
             }
-            steps {
-                jacoco(
-                    execPattern: '**/target/**.exec',
-                    classPattern: '**/target/classes',
-                    sourcePattern: '**/src',
-                    inclusionPattern: 'com/iamvickyav/**',
-                    changeBuildStatus: true,
-                    minimumInstructionCoverage: '30',
-                    maximumInstructionCoverage: '80'
-                )
+            steps{
+                echo "TAGGING GIT REPO..."
+                
+                sh """
+                git tag build-${BUILD_ID}
+                git push origin --tags
+                """
+
             }
         }
-        stage("Build & Deploy Code") {
+        stage('PUSH'){
             when {
-                branch 'main'
+                branch 'dev'
             }
-            steps {
-                script{
-                    def javaHome = tool 'java8'
-                    env.JAVA_HOME = "${javaHome}/bin/java"
-                    sh "mvn tomcat7:deploy"
+            steps{
+                echo "PUSHING THE IMAGE TO REPO ..."
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', passwordVariable: 'PASSWORD', usernameVariable: 'USERNAME')]) {
+                    sh """
+                    echo ${PASSWORD} | docker login --username ${USERNAME} --password-stdin 
+                    docker tag intern/springapp:build-${BUILD_ID} ${USERNAME}/jenkins-maven:build-${BUILD_ID}
+                    docker push ${USERNAME}/jenkins-maven:build-${BUILD_ID}
+                    """
                 }
             }
+        }
+    }
+    post {
+        success {
+           build job: 'Maven deploy', parameters: [string(name: 'BUILD', value: "$BUILD_ID")]
         }
     }
 }
