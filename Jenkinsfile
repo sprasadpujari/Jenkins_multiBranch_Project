@@ -56,6 +56,13 @@ pipeline {
                 script{
                     def javaHome = tool 'java8'
                     env.JAVA_HOME = "${javaHome}/bin/java"
+             sh """
+                echo "Building Artifact........................."
+                """
+
+                sh """
+                echo "Deploying Code............................."
+                """
                     
                 }
             }
