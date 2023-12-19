@@ -4,7 +4,8 @@ pipeline {
         maven '3.9.6'
         jdk 'java8'
     }
-    stage("Checkout Code") {
+    stages {
+        stage("Checkout Code") {
             steps {
                 checkout scm
             }
@@ -13,21 +14,21 @@ pipeline {
             when {
                 not {
                     anyOf {
-                        branch 'main';
+                        branch 'main'
                         branch 'dev'
                     }
                 }
-           }
-           steps {
-               sh "mvn clean compile"
+            }
+            steps {
+                sh "mvn clean compile"
             }
         }
         stage("Run Test cases") {
             when {
-                branch 'dev';
+                branch 'dev'
             }
-           steps {
-               sh "mvn clean test"
+            steps {
+                sh "mvn clean test"
             }
         }
         stage("Check Code coverage") {
@@ -35,15 +36,16 @@ pipeline {
                 branch 'dev'
             }
             steps {
-               jacoco(
+                jacoco(
                     execPattern: '**/target/**.exec',
                     classPattern: '**/target/classes',
                     sourcePattern: '**/src',
                     inclusionPattern: 'com/iamvickyav/**',
                     changeBuildStatus: true,
                     minimumInstructionCoverage: '30',
-                    maximumInstructionCoverage: '80')
-           }
+                    maximumInstructionCoverage: '80'
+                )
+            }
         }
         stage("Build & Deploy Code") {
             when {
@@ -54,4 +56,4 @@ pipeline {
             }
         }
     }
- }
+}
