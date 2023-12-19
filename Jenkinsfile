@@ -52,7 +52,11 @@ pipeline {
                 branch 'main'
             }
             steps {
-                sh "mvn tomcat7:deploy"
+                script{
+                    def javaHome = tool 'java8'
+                    env.JAVA_HOME = "${javaHome}/bin/java"
+                    sh "mvn tomcat7:deploy"
+                }
             }
         }
     }
