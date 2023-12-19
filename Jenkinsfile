@@ -1,55 +1,57 @@
 pipeline {
     agent any
-
     tools {
-        maven '3.9.6'
-        jdk 'java8'
+        maven 'MAVEN_PATH'
+        jdk 'jdk8'
     }
-
-    stages {
-        stage('Checkout') {
+    stage("Checkout Code") {
             steps {
                 checkout scm
             }
         }
-
-        stage('Build') {
-            steps {
-                script {
-                    // Uncomment and customize if needed
-                    // env.MAVEN_OPTS = '-Xmx1024m -XX:MaxPermSize=256m'
-                    sh 'mvn clean install'
-                }
-            }
-        }
-
-        stage('Test') {
-            steps {
-                script {
-                    sh 'mvn test'
-                }
-            }
-        }
-
-        stage('Deploy') {
+        stage("Check Code Health") {
             when {
-                expression { branch 'main' }
+                not {
+                    anyOf {
+                        branch 'main';
+                        branch 'dev'
+                    }
+                }
+           }
+           steps {
+               sh "mvn clean compile"
+            }
+        }
+        stage("Run Test cases") {
+            when {
+                branch 'dev';
+            }
+           steps {
+               sh "mvn clean test"
+            }
+        }
+        stage("Check Code coverage") {
+            when {
+                branch 'dev'
             }
             steps {
-                script {
-                    // Uncomment and customize the deployment step
-                    // sh 'mvn tomcat7:deploy'
-                }
+               jacoco(
+                    execPattern: '**/target/**.exec',
+                    classPattern: '**/target/classes',
+                    sourcePattern: '**/src',
+                    inclusionPattern: 'com/iamvickyav/**',
+                    changeBuildStatus: true,
+                    minimumInstructionCoverage: '30',
+                    maximumInstructionCoverage: '80')
+           }
+        }
+        stage("Build & Deploy Code") {
+            when {
+                branch 'main'
+            }
+            steps {
+                sh "mvn tomcat7:deploy"
             }
         }
     }
-
-    post {
-        success {
-            echo 'Pipeline executed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed!'
-        }
-    }
-}
+ }
