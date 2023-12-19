@@ -1,4 +1,4 @@
-   pipeline {
+pipeline {
     agent any
 
     tools {
@@ -16,7 +16,7 @@
         stage('Build') {
             steps {
                 script {
-                    // Set the MAVEN_OPTS environment variable if needed
+                    // Uncomment and customize if needed
                     // env.MAVEN_OPTS = '-Xmx1024m -XX:MaxPermSize=256m'
                     sh 'mvn clean install'
                 }
@@ -26,7 +26,6 @@
         stage('Test') {
             steps {
                 script {
-                    // Run tests, if applicable
                     sh 'mvn test'
                 }
             }
@@ -38,8 +37,7 @@
             }
             steps {
                 script {
-                    // Perform deployment steps, if needed
-                    // For example, deploy to an application server
+                    // Uncomment and customize the deployment step
                     // sh 'mvn tomcat7:deploy'
                 }
             }
