@@ -65,6 +65,7 @@ pipeline {
                 """
                      withMaven(maven : '3.9.6') {
                     sh 'mvn deploy'
+                     }
                     
                 }
             }
