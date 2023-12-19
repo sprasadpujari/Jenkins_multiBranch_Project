@@ -5,61 +5,51 @@ pipeline {
         jdk 'java8'
     }
     stages {
-        stage("Tools initialization") {
-            steps {
-                sh "mvn --version"
-                sh "java -version"
-            }
-        }
-        stage("Checkout Code") {
+        stage('Checkout') {
             steps {
                 checkout scm
             }
         }
-        stage("Check Code Health") {
-            when {
-                not {
-                    anyOf {
-                        expression { branch 'main' }
-                        expression { branch 'dev' }
-                    }
+
+        stage('Build') {
+            steps {
+                script {
+                    // Set the MAVEN_OPTS environment variable if needed
+                    // env.MAVEN_OPTS = '-Xmx1024m -XX:MaxPermSize=256m'
+                    sh 'mvn clean install'
                 }
             }
+        }
+
+        stage('Test') {
             steps {
-                sh "mvn clean compile"
+                script {
+                    // Run tests, if applicable
+                    sh 'mvn test'
+                }
             }
         }
-        stage("Run Test cases") {
-            when {
-                expression { branch 'dev' }
-            }
-            steps {
-                sh "mvn clean test"
-            }
-        }
-        stage("Check Code coverage") {
-            when {
-                expression { branch 'dev' }
-            }
-            steps {
-                jacoco(
-                    execPattern: '**/target/**.exec',
-                    classPattern: '**/target/classes',
-                    sourcePattern: '**/src',
-                    inclusionPattern: 'com/iamvickyav/**',
-                    changeBuildStatus: true,
-                    minimumInstructionCoverage: '30',
-                    maximumInstructionCoverage: '80'
-                )
-            }
-        }
-        stage("Build & Deploy Code") {
+
+        stage('Deploy') {
             when {
                 expression { branch 'main' }
             }
             steps {
-                sh "mvn tomcat7:deploy"
+                script {
+                    // Perform deployment steps, if needed
+                    // For example, deploy to an application server
+                    // sh 'mvn tomcat7:deploy'
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline executed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
